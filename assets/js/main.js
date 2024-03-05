@@ -1,75 +1,105 @@
-const state = {
-    view: {
-        squares: document.querySelectorAll('.square'),
-        enemy: document.querySelectorAll('.enemy'),
-        timeLeft: document.querySelector('#time-left'),
-        score: document.querySelector('#score'),
-        lifeCounter: document.querySelector('#lifes'),
-    },
-    values: {
-        hitPosition: 0,
-        result: 0,
-        currentTimer: 60,
-        lifeRemaining: 3,
-    },
-    actions: {
-        timerId: setInterval(randomSquare, 500),
-        countDownTimerId: setInterval(countDown, 1000),
-    },
-}
+class Game {
+  constructor() {
+    this.elements = {
+      squares: document.querySelectorAll('.square'),
+      timeLeft: document.querySelector('#time-left'),
+      score: document.querySelector('#score'),
+      lifeCounter: document.querySelector('#lifes'),
+    };
 
-function countDown() {
-    state.values.currentTimer--
-    state.view.timeLeft.textContent = state.values.currentTimer
+    this.data = {
+      hitPosition: 0,
+      result: 0,
+      currentTimer: 60,
+      remainingLives: 3,
+    };
 
-    if (state.values.currentTimer === 0) {
-        clearInterval(state.actions.countDownTimerId)
-        clearInterval(state.actions.timerId)
-        alert(`Gamer Over! O seu resultado foi ${state.values.result}`)
+    this.sounds = {
+      hitSound: new Audio('./assets/sounds/hit.m4a'),
+    };
+
+    // Inicializa o jogo
+    this.setupGame();
+  }
+
+  setupGame() {
+    this.setupIntervals();
+    this.addListenerHitBox();
+  }
+
+  setupIntervals() {
+    setInterval(() => this.showRandomSquare(), 500);
+    setInterval(() => this.countDown(), 1000);
+  }
+
+  showRandomSquare() {
+    this.clearEnemySquares();
+
+    const randomNumber = Math.floor(Math.random() * 9);
+    const randomSquare = this.elements.squares[randomNumber];
+
+    randomSquare.classList.add('enemy');
+
+    this.data.hitPosition = randomSquare.id;
+  }
+
+  clearEnemySquares() {
+    this.elements.squares.forEach((square) => square.classList.remove('enemy'));
+  }
+
+  countDown() {
+    this.data.currentTimer--;
+
+    this.elements.timeLeft.textContent = this.data.currentTimer;
+
+    if (this.data.currentTimer === 0) {
+      this.endGame();
     }
+  }
+
+  playSound(sound) {
+    sound.currentTime = 0;
+    sound.volume = 0.2;
+
+    sound.play();
+  }
+
+  handleHit() {
+    this.data.result++;
+
+    this.playSound(this.sounds.hitSound);
+
+    this.elements.score.textContent = this.data.result;
+    this.data.hitPosition = null;
+  }
+
+  handleMiss() {
+    this.data.remainingLives--;
+
+    this.elements.lifeCounter.textContent = `x${this.data.remainingLives}`;
+
+    if (this.data.remainingLives === 0) {
+      this.endGame();
+    }
+  }
+
+  endGame() {
+    clearInterval();
+
+    alert(`Game Over! Seu resultado foi ${this.data.result}`);
+    
+    window.location.reload(true);
+  }
+
+  addListenerHitBox() {
+    this.elements.squares.forEach((square) => {
+      square.addEventListener('mousedown', () => {
+        square.id == this.data.hitPosition
+          ? this.handleHit()
+          : this.handleMiss();
+      });
+    });
+  }
 }
 
-function playSound(soundName) {
-    const audio = new Audio(`./assets/sounds/${soundName}.m4a`)
-    audio.volume = 0.2
-    audio.play()
-}
-
-function randomSquare() {
-    state.view.squares.forEach((square) => {
-        square.classList.remove('enemy')
-    })
-
-    const randomNumber = Math.floor(Math.random() * 9)
-    const randomSquare = state.view.squares[randomNumber]
-
-    randomSquare.classList.add('enemy')
-    state.values.hitPosition = randomSquare.id
-}
-
-function addListenerHitBox() {
-    state.view.squares.forEach((square) => {
-        square.addEventListener('mousedown', () => {
-            if (square.id == state.values.hitPosition) {
-                state.values.result++
-                playSound('hit')
-                state.view.score.textContent = state.values.result
-                state.values.hitPosition = null
-            } else {
-                state.values.lifeRemaining--
-                state.view.lifeCounter.textContent = `x${state.values.lifeRemaining}`
-
-                if (state.values.lifeRemaining === 0) {
-                    alert(
-                        `Gamer Over! O seu resultado foi ${state.values.result}`
-                    )
-                    window.location.reload(true)
-                }
-            }
-        })
-    })
-}
-
-;(function init() {
-    addListenerHitBox()
-})()
+const game = new Game();
