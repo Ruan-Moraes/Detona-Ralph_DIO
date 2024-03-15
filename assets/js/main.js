@@ -84,10 +84,8 @@ class Game {
   }
 
   endGame() {
-    clearInterval();
-
     alert(`Game Over! Seu resultado foi ${this.data.result}`);
-    
+
     window.location.reload(true);
   }
 
